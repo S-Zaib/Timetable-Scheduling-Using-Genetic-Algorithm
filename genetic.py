@@ -5,7 +5,7 @@ import random
 courses = {1: 1, 2: 2, 3: 1, 4: 1}
 
 # Section No: No of students
-sections = {1: 119, 2: 54, 3: 120, 4: 60}
+sections = {1: 119, 2: 54, 3: 120, 4: 60, 5: 120}
 
 # Professor No: List of Course Nos that he can teach
 professors = {
@@ -68,21 +68,24 @@ def get_course_len_bits():
 
 def generate_chromosome():
     final = ""
+    temp_courses = []
+    for course in courses:
+        if courses[course] == 2:
+            temp_courses.append(course)
+            temp_courses.append(course)
+        else:
+            temp_courses.append(course)
+    temp_courses = temp_courses * len(sections)
+
     for i in range(5):
+        courses_count = 0
         chromosome = ""
         classes = get_min_classes_per_day()
-        temp_courses = []
-        courses_count = 0
-        for course in courses:
-            if courses[course] == 2:
-                temp_courses.append(course)
-                temp_courses.append(course)
-            else:
-                temp_courses.append(course)
-        for _ in range(classes):
+        
+        while True:
             if len(temp_courses) == 0:
                 courses_count = 0
-                continue
+                break
             else:
                 courses_count += 1
             course = random.choice(temp_courses)
@@ -92,10 +95,9 @@ def generate_chromosome():
             room = random.choice(list(rooms.keys()))
             timeslot = random.choice(list(timeslots.keys()))
             day = i + 1
-            # print('C:',course, courses_count, section, professor, room, timeslot, day)
+            print('C:',course, courses_count, section, professor, room, timeslot, day)
             # use get_min_bits to get the min bits needed to represent any dictionary
             chromosome += format(course, f"0{get_min_bits(courses)}b")
-            # chromosome += format(courses_count, f"0{get_course_len_bits()}b")
             chromosome += format(section, f"0{get_min_bits(sections)}b")
             chromosome += format(professor, f"0{get_min_bits(professors)}b")
             chromosome += format(room, f"0{get_min_bits(rooms)}b")
@@ -115,7 +117,7 @@ def chromosome_to_timetable(chrm):
     for i in range(5): # 5 days
         timetable[i + 1] = []
         # Get course count in the day
-        class_count = classes
+        class_count = int(chrm[:get_course_len_bits()], 2)
         chrm = chrm[get_course_len_bits():]
         for j in range(class_count):
             start = (i * class_count + j) * total_bits
@@ -127,7 +129,7 @@ def chromosome_to_timetable(chrm):
             room = int(gene[get_min_bits(courses) + get_min_bits(sections) + get_min_bits(professors):get_min_bits(courses) + get_min_bits(sections) + get_min_bits(professors) + get_min_bits(rooms)], 2)
             timeslot = int(gene[get_min_bits(courses) + get_min_bits(sections) + get_min_bits(professors) + get_min_bits(rooms):get_min_bits(courses) + get_min_bits(sections) + get_min_bits(professors) + get_min_bits(rooms) + get_min_bits(timeslots)], 2)
             day = int(gene[get_min_bits(courses) + get_min_bits(sections) + get_min_bits(professors) + get_min_bits(rooms) + get_min_bits(timeslots):], 2)
-            # print('T:',course, class_count, section, professor, room, timeslot, day)
+            print('T:',course, class_count, section, professor, room, timeslot, day)
             # Check if course is in the dictionary
             course_type = 'N/A'
             if course in courses:

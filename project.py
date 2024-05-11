@@ -2,204 +2,539 @@ import random
 
 # Basic Data
 # Course No: Course Type (1: Theory, 2: Lab)
-courses = {
-    1 : 1,
-    2 : 2,
-    3 : 1,
-    4 : 1,
-    5 : 1,
-    6 : 2,
-    7 : 1,
-    8 : 1,
-    9 : 2,
-    10 : 1}
+courses = {1: 1, 2: 2, 3: 1, 4: 1}
 
 # Section No: No of students
-sections = {
-    1 : 60,
-    2 : 120,
-    3 : 60,
-    4 : 120,
-    5 : 60}
-# Professor No: List of Course Nos
+sections = {1: 119, 2: 54, 3: 59, 4: 110}
+
+# Professor No: List of Course Nos that he can teach
 professors = {
-    1 : [1, 2],
-    2 : [3, 4],
-    3 : [5, 6],
-    4 : [7, 8],
-    5 : [9, 10],
-    6 : [2, 3],
-    7 : [4, 5],
-    8 : [6, 7, 8],
-    7 : [9, 10]}
+    1: [1, 2, 3],
+    2: [3, 4, 1],
+    3: [1, 4, 2],
+    4: [2, 3, 4],
+    5: [1, 2, 3, 4],
+    6: [3, 4],
+    7: [1, 2, 3],
+    8: [1, 2, 3, 4],
+    9: [2, 3, 4],
+    10: [1, 3, 4],
+}
 
 # Timeslot No: Time
 timeslots = {
-    1 : "8:30 - 9:50",
-    2 : "10:05 - 11:25",
-    3 : "11:40 - 1:00",
-    4 : "1:15 - 2:35",
-    5 : "2:50 - 4:10",
-    6 : "4:25 - 5:45",
+    1: "8:30 - 9:50",
+    2: "10:05 - 11:25",
+    3: "11:40 - 1:00",
+    4: "1:15 - 2:35",
+    5: "2:50 - 4:10",
+    6: "4:25 - 5:45"
 }
 
-# Room No: Capacity and Timeslots
+# Room No: Capacity, Room Name (Same floor rooms like 4th floor has 401, 402, 3rd floor 301, 302 etc.)
 rooms = {
-    101 : [60, list(timeslots.keys())],
-    201 : [60, list(timeslots.keys())],
-    102 : [120, list(timeslots.keys())],
-    202 : [120, list(timeslots.keys())],
-    301 : [120, list(timeslots.keys())],
-    302 : [120, list(timeslots.keys())],
-    401 : [60, list(timeslots.keys())],
-    402 : [60, list(timeslots.keys())],
-    501 : [120, list(timeslots.keys())],
-    502 : [120, list(timeslots.keys())],
-    601 : [60, list(timeslots.keys())],
-    602 : [60, list(timeslots.keys())],
-    701 : [120, list(timeslots.keys())],
-    702 : [120, list(timeslots.keys())],
-    801 : [120, list(timeslots.keys())],
-    802 : [120, list(timeslots.keys())],
-    901 : [60, list(timeslots.keys())],
-    902 : [60, list(timeslots.keys())],
-    1001 : [120, list(timeslots.keys())]
+    1: [60, 101],
+    2: [120, 102],
+    3: [60, 203],
+    4: [120, 202],
+    5: [60, 201],
+    6: [120, 303],
+    7: [60, 302],
+    8: [120, 301]
 }
 
-def has_consecutive_timeslots(room):
-    timeslots = sorted(room)
-    for i in range(len(timeslots) - 1):
-        if timeslots[i] + 1 == timeslots[i + 1]:
-            return timeslots[i]
-    return -1
 
-
-# The chromosomes should be a whole timetable binary encoded with the following information:
-# Course, Theory/Lab, Section, Section-Strength, Professor, First-lecture-day,
-# First- lecture-timeslot, First-lecture-room, First-lecture-room-size, Second-
-# lecture-day, Second-lecture-timeslot, Second-lecture-room, Second-lecture-
-# room-size and so on depending on the number of lectures in a week.
-def create_chromosome():
-    chromosome = []
+def get_total_classes():
+    count_theory = 0
+    count_lab = 0
     for course in courses:
-        # Select random count of 1 to number of sections for the course
-        count = random.randint(1, len(sections))
-        section_copy = sections.copy()
-        for _ in range(count):
-            # Select a random section
-            section = random.choice(list(section_copy.keys()))
-            # Get the section strength
-            section_strength = section_copy[section]
-            # Remove the section from the list to avoid repetition
-            del section_copy[section]
-            # Select a random professor that teaches the course
-            possible_professors = [professor for professor, courses in professors.items() if course in courses]
-            professor = random.choice(possible_professors)
-            # Select a random room that can accommodate the section strength
-            possible_rooms = [room for room, room_info in rooms.items() if room_info[0] >= section_strength]
-            room = random.choice(possible_rooms)
-            # Select a random timeslot for the lecture, select 1 if the course is theory and 2 if the course is lab
-            # Add 1 timeslot and -1 for the second timeslot if course is theo
-            timeslot = timeslot2 = -1
-            max_tries = 10
-            while rooms[room][1] == [] and max_tries > 0:
-                    room = random.choice(possible_rooms)
-                    max_tries -= 1
-            if rooms[room][1] == []:
-                print('No timeslots available')
-                break
-            if courses[course] == 1:
-                timeslot = random.choice(list(rooms[room][1]))
-                max_tries = 10
-                while timeslot == -1 and max_tries > 0:
-                    room = random.choice(possible_rooms)
-                    timeslot = random.choice(rooms[room][1])
-                    max_tries -= 1
-                if timeslot != -1:
-                    rooms[room][1].remove(timeslot)
-                timeslot2 = -1
-            else:
-                # Check if the room has any consecutive timeslots available
-                max_tries = 10
-                timeslot = has_consecutive_timeslots(rooms[room][1])
-                while timeslot == -1 and max_tries > 0:
-                    print(rooms[room][1], timeslot)
-                    room = random.choice(possible_rooms)
-                    timeslot = has_consecutive_timeslots(rooms[room][1])
-                    max_tries -= 1
-                    if timeslot != -1:
-                        rooms[room][1].remove(timeslot)                    
-                if timeslot != -1 and courses[course] == 2:
-                    timeslot2 = timeslot + 1
-                    rooms[room][1].remove(timeslot2)
-
-            if timeslot == -1 or timeslot2 == -1:
-                print('No timeslots available')
-                break
-                            
-
-            #     timeslot = random.choice(list(timeslots_copy.keys()))
-            #     timeslot2 = -1
-            # else:
-            #     timeslot = random.choice(list(timeslots_copy.keys()))
-            #     del timeslots_copy[timeslot]
-            #     timeslot2 = random.choice(list(timeslots_copy.keys()))
-            
-            # Append the course no
-            chromosome.append(course)
-            # Append the course type
-            chromosome.append(courses[course])
-            # Append the section information
-            chromosome.append(section)
-            # Append the section strength
-            chromosome.append(section_strength)
-            # Append the professor 
-            chromosome.append(professor)
-            # Append the timeslot
-            chromosome.append(timeslot)
-            chromosome.append(timeslot2)
-            # Append the room no and room size
-            chromosome.append(room)
-            chromosome.append(rooms[room][0])
-
-    return chromosome
-# In one chromosome, the first 5 elements are the course information and the rest are the lecture information
-# Course, Theory/Lab, Section, Section-Strength, Professor, First-lecture-day,
-# First- lecture-timeslot, First-lecture-room, First-lecture-room-size, Second-
-# lecture-day, Second-lecture-timeslot, Second-lecture-room, Second-lecture-
-# room-size and so on depending on the number of lectures in a week.
-
-# Display timetable function
-def display(chromosome):
-    for i in range(0, len(chromosome), 9):
-        course = chromosome[i]
-        course_type = chromosome[i+1]
-        section = chromosome[i+2]
-        section_strength = chromosome[i+3]
-        professor = chromosome[i+4]
-        timeslot = chromosome[i+5]
-        timeslot2 = chromosome[i+6]
-        room = chromosome[i+7]
-        room_size = chromosome[i+8]
-        print(f"Course: {course}, Course Type: {course_type}, Section: {section}, Section Strength: {section_strength}, Professor: {professor}, Timeslot: {timeslots[timeslot]}" , end="")
-        if timeslot2 != -1:
-            print(f", {timeslots[timeslot2]}, Room: {room}, Room Size: {room_size}")
+        if courses[course] == 1:
+            count_theory += 2
         else:
-            print(f", Room: {room}, Room Size: {room_size}")
+            count_lab += 1
+    total_classes = count_theory * len(sections) + count_lab * len(sections)
+    return total_classes
 
-display(create_chromosome())
 
+def get_min_classes_per_day():
+    total_classes = get_total_classes()
+    return total_classes // 5
+
+
+# Genetic Algorithm
+
+
+# A function which gets the min bits needed to represent any dictionary
+def get_min_bits(dictionary):
+    return len(bin(max(dictionary.keys()))[2:])
+
+
+def generate_chromosome():
+    final = ""
+    for i in range(5):
+        chromosome = ""
+        classes_per_day = get_min_classes_per_day()
+        for _ in range(classes_per_day):
+            course = random.choice(list(courses.keys()))
+            section = random.choice(list(sections.keys()))
+            professor = random.choice(list(professors.keys()))
+            room = random.choice(list(rooms.keys()))
+            timeslot = random.choice(list(timeslots.keys()))
+            day = i + 1
+            chromosome += format(course, f"0{get_min_bits(courses)}b")
+            chromosome += format(section, f"0{get_min_bits(sections)}b")
+            chromosome += format(professor, f"0{get_min_bits(professors)}b")
+            chromosome += format(room, f"0{get_min_bits(rooms)}b")
+            chromosome += format(timeslot, f"0{get_min_bits(timeslots)}b")
+            chromosome += format(day, "03b")
+        final += chromosome
+    return final
+
+
+def chromosome_to_timetable(chrm):
+    # Take into account the min classes per day
+    timetable = {}
+    classes = get_min_classes_per_day()
+    # Get the total bits to iterate over the chromosome
+    total_bits = (
+        get_min_bits(courses)
+        + get_min_bits(sections)
+        + get_min_bits(professors)
+        + get_min_bits(rooms)
+        + get_min_bits(timeslots)
+        + 3
+    )
+    for i in range(5):  # 5 days
+        timetable[i + 1] = []
+        # Get course count in the day
+        class_count = get_min_classes_per_day()
+        for j in range(class_count):
+            start = i * classes * total_bits + j * total_bits
+            end = start + total_bits
+            course = int(chrm[start : start + get_min_bits(courses)], 2)
+            section = int(
+                chrm[
+                    start
+                    + get_min_bits(courses) : start
+                    + get_min_bits(courses)
+                    + get_min_bits(sections)
+                ],
+                2,
+            )
+            professor = int(
+                chrm[
+                    start
+                    + get_min_bits(courses)
+                    + get_min_bits(sections) : start
+                    + get_min_bits(courses)
+                    + get_min_bits(sections)
+                    + get_min_bits(professors)
+                ],
+                2,
+            )
+            room = int(
+                chrm[
+                    start
+                    + get_min_bits(courses)
+                    + get_min_bits(sections)
+                    + get_min_bits(professors) : start
+                    + get_min_bits(courses)
+                    + get_min_bits(sections)
+                    + get_min_bits(professors)
+                    + get_min_bits(rooms)
+                ],
+                2,
+            )
+            timeslot = int(
+                chrm[
+                    start
+                    + get_min_bits(courses)
+                    + get_min_bits(sections)
+                    + get_min_bits(professors)
+                    + get_min_bits(rooms) : start
+                    + get_min_bits(courses)
+                    + get_min_bits(sections)
+                    + get_min_bits(professors)
+                    + get_min_bits(rooms)
+                    + get_min_bits(timeslots)
+                ],
+                2,
+            )
+            day = i + 1
+            # print('T:',course, class_count, section, professor, room, timeslot, day)
+            # Check if course is in the dictionary
+            course_type = "N/A"
+            if course in courses:
+                course_type = "Theory" if courses[course] == 1 else "Lab"
+            timetable[i + 1].append(
+                {
+                    "course": course,
+                    "type": course_type,
+                    "section": section,
+                    "professor": professor,
+                    "room": room,
+                    "timeslot": timeslot,
+                    "day": day,
+                }
+            )
+
+    return timetable
 
 
 def create_population(population_size):
     population = []
-    for i in range(population_size):
-        population.append(create_chromosome())
+    for _ in range(population_size):
+        population.append(generate_chromosome())
     return population
 
 
+def display_timetable(timetable):
+    for day in timetable:
+        print(f"Day: {day}")
+        for lecture in timetable[day]:
+            print(
+                f"Course: {lecture['course']}, Type: {lecture['type']}\t Section: {lecture['section']}, Professor: {lecture['professor']}, Room: {lecture['room']}, Timeslot: {lecture['timeslot']}"
+            )
 
-        
+def remove_extra_classes(timetable):
+    # Initialize a dictionary to keep track of the schedule for each course and section
+    course_section_schedule = {}
+    room_schedule = {}
+    professor_schedule = {}
+
+    # Fill up room and professor schedules
+    for day in timetable:
+        for lecture in timetable[day]:
+            course = lecture["course"]
+            section = lecture["section"]
+            professor = lecture["professor"]
+            room = lecture["room"]
+            timeslot = lecture["timeslot"]
+
+
+            # Update the room and professor schedules
+            if room not in room_schedule:
+                room_schedule[room] = [timeslot]
+            else:
+                room_schedule[room].append(timeslot)
+
+            if professor not in professor_schedule:
+                professor_schedule[professor] = [timeslot]
+            else:
+                professor_schedule[professor].append(timeslot)
+
+    for day in range(1, 6):  # Assuming timetable days are numbered from 1 to 5
+        # Initialize a list to keep track of the classes to remove or shift
+        classes_to_remove_or_shift = []
+
+        for lecture in timetable[day]:
+            course = lecture["course"]
+            section = lecture["section"]
+
+            # Check if the course and section have two lectures on the same day
+            if (course, section) in course_section_schedule and day in course_section_schedule[(course, section)]:
+                # The course and section have two lectures on the same day, mark this class for removal or shifting
+                classes_to_remove_or_shift.append(lecture)
+            else:
+                # The course and section do not have two lectures on the same day, add this day to the course and section schedule
+                course_section_schedule.setdefault((course, section), []).append(day)
+
+        # Remove or shift the marked classes
+        for lecture in classes_to_remove_or_shift:
+            timetable[day].remove(lecture)
+            other_days = [d for d in course_section_schedule[(lecture["course"], lecture["section"])] if d != day]
+            if other_days:
+                # If there exists another class in the week with the same course and section, remove this class
+                continue
+            else:
+                # If there doesn't exist another class in the week with the same course and section, shift this class 2 days ahead
+                next_day = day + 2
+                while next_day <= 5:  # Assuming timetable days are numbered from 1 to 5
+                    # Check if the room and timeslot are free, the professor is free at that timeslot, and the room can accommodate the section
+                    free_rooms = [room for room in rooms if rooms[room][0] >= sections[section] and (room not in room_schedule or next_day not in room_schedule[room])]
+                    free_timeslots = [timeslot for timeslot in timeslots if (lecture["professor"] not in professor_schedule or next_day not in professor_schedule[lecture["professor"]]) and all(next_day not in room_schedule[room] for room in free_rooms)]
+                    if free_rooms and free_timeslots:
+                        # Choose a room and timeslot that isn't occupied
+                        lecture["room"] = random.choice(free_rooms)
+                        lecture["timeslot"] = random.choice(free_timeslots)
+                        timetable[next_day].append(lecture)
+                        break
+                    next_day += 1
+
+    return timetable
 
 
 
+def fitness(chromosome, debug=False):
+    # Convert the chromosome to a timetable
+    timetable = chromosome_to_timetable(chromosome)
+    if debug:
+        timetable = remove_extra_classes(timetable)
+    # Initialize fitness to a high value
+    fitness = 100
+
+    # Initialize dictionaries to keep track of professor, room and section schedules
+    professor_schedule = {}
+    room_schedule = {}
+    section_schedule = {}
+
+    for day in timetable:
+        # Initialize dictionaries for the current day
+        professor_schedule_day = {}
+        room_schedule_day = {}
+        section_schedule_day = {}
+
+        for lecture in timetable[day]:
+            course = lecture["course"]
+            section = lecture["section"]
+            professor = lecture["professor"]
+            room = lecture["room"]
+            timeslot = lecture["timeslot"]
+
+            # Check if values are within the allowed range
+            if (
+                course not in courses
+                or section not in sections
+                or professor not in professors
+                or room not in rooms
+                or timeslot not in timeslots
+            ):
+                # Value is not in the allowed range, decrease fitness
+                if debug:
+                    print("Out of range values")
+                fitness -= 100
+                continue
+
+            # Check if the room is free and big enough
+            if room not in room_schedule_day:
+                room_schedule_day[room] = {timeslot: section}
+            elif timeslot not in room_schedule_day[room]:
+                room_schedule_day[room][timeslot] = section
+            else:
+                # Room is already occupied at this timeslot, decrease fitness
+                if debug:
+                    print("Room is already occupied at this timeslot")
+                fitness -= 1
+
+            if sections[section] > rooms[room][0]:
+                # Room is not big enough, decrease fitness
+                if debug:
+                    print("Room is not big enough")
+                fitness -= 1
+
+            # Check if the professor is free and can teach the course
+            if professor not in professor_schedule_day:
+                professor_schedule_day[professor] = {timeslot: course}
+            elif timeslot not in professor_schedule_day[professor]:
+                professor_schedule_day[professor][timeslot] = course
+            else:
+                # Professor is already teaching at this timeslot, decrease fitness
+                if debug:
+                    print("Professor is already teaching at this timeslot")
+                fitness -= 1
+
+            if course not in professors[professor]:
+                # Professor can't teach this course, decrease fitness
+                if debug:
+                    print("Professor can't teach this course")
+                fitness -= 1
+
+            # Check if the section is free and has less than 5 courses
+            if section not in section_schedule_day:
+                section_schedule_day[section] = {timeslot: course}
+            elif timeslot not in section_schedule_day[section]:
+                section_schedule_day[section][timeslot] = course
+            else:
+                # Section already has a lecture at this timeslot, decrease fitness
+                if debug:
+                    print("Section already has a lecture at this timeslot")
+                fitness -= 1
+
+            if len(set(section_schedule_day[section].values())) > 5:
+                # Section has more than 5 courses, decrease fitness
+                if debug:
+                    print("Section has more than 5 courses")
+                fitness -= 1
+
+        # Update the overall schedules with the schedules of the current day
+        professor_schedule.update(professor_schedule_day)
+        room_schedule.update(room_schedule_day)
+        section_schedule.update(section_schedule_day)
+
+    # Check for out of range values
+    if fitness <= 0:
+        return fitness
+
+    # Check for each course if it has two lectures per week not on the same or adjacent days
+    for section in section_schedule:
+        course_days = {}
+        for timeslot in section_schedule[section]:
+            course = section_schedule[section][timeslot]
+            day = (timeslot - 1) // len(timeslots) + 1
+            if course not in course_days:
+                course_days[course] = [day]
+            else:
+                course_days[course].append(day)
+
+        for course in course_days:
+            if (
+                len(course_days[course]) != 2
+                or abs(course_days[course][0] - course_days[course][1]) <= 1
+            ):
+                # Course doesn't have two lectures or they are on the same or adjacent days, decrease fitness
+                if debug:
+                    print(
+                        "Course doesn't have two lectures or they are on the same or adjacent days"
+                    )
+                fitness -= 1
+
+    # Check for each professor if they teach more than 3 courses
+    for professor in professor_schedule:
+        if len(set(professor_schedule[professor].values())) > 3:
+            # Professor teaches more than 3 courses, decrease fitness
+            if debug:
+                print("Professor teaches more than 3 courses")
+            fitness -= 1
+
+    # Check if the lab course next timeslot is open with no classes for the same section
+    for day in timetable:
+        for lecture in timetable[day]:
+            course = lecture["course"]
+            section = lecture["section"]
+            professor = lecture["professor"]
+            room = lecture["room"]
+            timeslot = lecture["timeslot"]
+            if courses[course] == 2:
+                next_timeslot = timeslot + 1
+                if next_timeslot not in timeslots:
+                    if debug:
+                        print("Next timeslot is out of range")
+                    fitness -= 1
+                elif (
+                    next_timeslot in room_schedule[room]
+                    and next_timeslot in section_schedule[section]
+                    and section_schedule[section][next_timeslot] != course
+                ):
+                    if debug:
+                        print("Next timeslot is not open")
+                    fitness -= 1
+
+    return fitness
+
+
+def crossover(chromosome1, chromosome2):
+    crossovered_chromosome = ""
+    for gene1, gene2 in zip(chromosome1, chromosome2):
+        if random.random() < 0.5:
+            if gene1 != gene2:
+                if gene1 == "1":
+                    crossovered_chromosome += "0"
+                else:
+                    crossovered_chromosome += "1"
+            else:
+                if gene1 == "1":
+                    crossovered_chromosome += "1"
+                else:
+                    crossovered_chromosome += "0"
+        else:
+            if gene1 == "1":
+                crossovered_chromosome += "1"
+            else:
+                crossovered_chromosome += "0"
+
+    return crossovered_chromosome
+
+
+# tournament selection
+def selection(fitness_values):
+    # tournament selection
+    tournament_size = 5
+    tournament = random.sample(range(len(fitness_values)), tournament_size)
+    best_chromosome = tournament[0]
+    for chromosome in tournament:
+        if fitness_values[chromosome] > fitness_values[best_chromosome]:
+            best_chromosome = chromosome
+    return best_chromosome
+
+
+def mutation(chromosome, mutation_rate):
+    mutated_chromosome = ""
+    for gene in chromosome:
+        if random.random() < mutation_rate:
+            # Flip the bit
+            mutated_chromosome += "0" if gene == "1" else "1"
+        else:
+            mutated_chromosome += gene
+    return mutated_chromosome
+
+
+def genetic_algorithm(population_size, generations, mutation_rate):
+    # Create an initial population of random chromosomes
+    population = create_population(population_size)
+    max_fitness = -1000
+    for _ in range(generations):
+        # Calculate the fitness of each chromosome in the population
+        fitness_values = [fitness(chromosome) for chromosome in population]
+
+        # Create a new population
+        new_population = []
+
+        # Keep the best chromosome from the previous generation
+        best_chromosome = population[fitness_values.index(max(fitness_values))]
+        new_population.append(best_chromosome)
+
+        # Create the rest of the new population
+        for _ in range(population_size - 1):
+            # Select two parents using tournament selection
+            parent1 = population[selection(fitness_values)]
+            parent2 = population[selection(fitness_values)]
+
+            # Create a child chromosome using crossover
+            child = crossover(parent1, parent2)
+
+            # Mutate the child chromosome
+            child = mutation(child, mutation_rate)
+
+            # Add the child to the new population
+            new_population.append(child)
+
+        # Replace the old population with the new population
+        population = new_population
+
+    # Calculate the fitness of the final population
+    fitness_values = [fitness(chromosome) for chromosome in population]
+
+    # Find the best chromosome in the final population
+    best_chromosome = population[fitness_values.index(max(fitness_values))]
+    # Convert the best chromosome to a timetable
+    timetable = chromosome_to_timetable(best_chromosome)
+    timetable = remove_extra_classes(timetable)
+    # Debug
+    max_fitness = fitness(best_chromosome, debug=True)
+
+    return timetable, max_fitness
+
+
+# print("---------------------------------------------------------------------------------------")
+# print("---------------------------------------------------------------------------------------")
+# print("---------------------------------------------------------------------------------------")
+# chrom = generate_chromosome()
+# print(chrom)
+# timetable = chromosome_to_timetable(chrom)
+# display_timetable(timetable)
+# print("---------------------------------------------------------------------------------------")
+# print("---------------------------------------------------------------------------------------")
+# print("---------------------------------------------------------------------------------------")
+
+# Run the genetic algorithm
+population_size = 100
+generations = 1000
+mutation_rate = 0.01
+timetable, fitness_score = genetic_algorithm(
+    population_size, generations, mutation_rate
+)
+
+# Display the final timetable
+display_timetable(timetable)
+# Get the fitness score
+print("Fitness Score:", fitness_score)
